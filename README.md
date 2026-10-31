@@ -1,5 +1,9 @@
 # Aura Autopilot
 
+> **AUE TOH development-agent work:** see the [project specification](docs/UE_AGENT_SPEC.md) and
+> [implementation status and developer harness](docs/UE_AGENT_IMPLEMENTATION.md). The new `ue_agent` package
+> is an early OpenAI/LangGraph foundation. The Autopilot instructions below describe the retained legacy runtime.
+
 > By the developers of Aura, [www.tryaura.dev](https://www.tryaura.dev/)
 
 ![Aura by Ramen](./assets/aura-logo.png)

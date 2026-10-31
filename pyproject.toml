@@ -28,6 +28,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+ue-agent = ["langchain==1.4.7", "langchain-openai==1.7.3", "langgraph==1.2.19", "pydantic==2.14.2", "openai==3.42.0"]
 # The Claude Code agent (AUTOPILOT_AGENT=claude). The default agent, OpenCode, runs under Bun: see the README.
 claude = ["claude-agent-sdk==0.2.164"]
 # The Codex agent (AUTOPILOT_AGENT=codex): OpenAI's Codex SDK and Codex itself (about 150 MB). OpenAI keys only
@@ -36,9 +37,10 @@ dev = ["claude-agent-sdk==0.2.164", "pytest==9.1.1", "ruff==0.17.0"]
 
 [project.scripts]
 autopilot = "autopilot.cli:main"
+ue-agent = "ue_agent.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["autopilot*"]
+include = ["autopilot*", "ue_agent*"]
 # Only folders with an __init__.py: OpenCode's host installs its packages beside it (opencode_host/node_modules),
 # and node-gyp's Python there must never be packaged as Autopilot's
 namespaces = false
@@ -65,4 +67,4 @@ ignore = ["E731", "E741"]
 "plugin/**/*.py" = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["autopilot"]
+known-first-party = ["autopilot", "ue_agent"]

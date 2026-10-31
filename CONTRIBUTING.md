@@ -23,7 +23,7 @@ Autopilot from a clone, what the tests cover, and how changes are reviewed and r
 ```bash
 git clone <your fork> autopilot && cd autopilot
 uv venv
-uv pip install -e ".[dev]"        # Autopilot, Claude Code's SDK, pytest and ruff
+uv pip install -e ".[dev,ue-agent]"  # legacy development tools plus the new LangChain/LangGraph foundation
 cp .env.example .env              # only needed to run real prompts; the tests need no keys
 ```
 

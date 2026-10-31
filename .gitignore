@@ -39,3 +39,6 @@ Thumbs.db
 
 # Bench results
 bench/results/
+
+# Local development-agent state and evidence are not project source.
+.ue_agent/

@@ -20,7 +20,7 @@ jobs:
           python-version: ${{ matrix.python }}
           activate-environment: true  # (a venv on PATH for the later steps: runners have no system 3.13)
       - name: Install
-        run: uv pip install -e ".[dev]"
+        run: uv pip install -e ".[dev,ue-agent]"
       - name: Lint
         run: ruff check .
       - name: Test
@@ -40,6 +40,6 @@ jobs:
           python-version: "3.12"
           activate-environment: true
       - name: Install
-        run: uv pip install -e ".[dev,codex]"
+        run: uv pip install -e ".[dev,codex,ue-agent]"
       - name: Test
         run: pytest -q tests/test_codex.py

@@ -280,7 +280,7 @@ Maintain an operation capability matrix for UE 5.8.3: available native tool, req
 
 # OpenAI gameplay control and Autopilot adaptation
 
-Replace Jev's decision-making with an explicit decision-policy interface backed by OpenAI. Audit prompt classification, reporting, frame evaluation, memory processing, and all alternate agent paths as well as the obvious runtime calls.
+Replace Jev's decision-making with an explicit decision-policy interface backed by OpenAI. The initial endpoint selection is OpenAI Decisions (`POST /v1/decisions`) with `gpt-6-luna`, the currently supported model as verified on October 31, 2026. This remains subject to gameplay accuracy and latency measurements. See the [official Decisions guide](https://developers.openai.com/api/docs/guides/decisions). Audit prompt classification, reporting, frame evaluation, memory processing, and all alternate agent paths as well as the obvious runtime calls.
 
 The model chooses among structured, currently legal gameplay actions. Code performs movement, aiming, button timing, observation sampling, and other fast control locally. Do not place a network model call on every Unreal frame.
 
