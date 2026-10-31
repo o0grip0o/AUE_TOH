@@ -1,10 +1,12 @@
 # AUE TOH Unreal Autonomous Agent Specification Draft
 
-Version 0.3. October 31, 2026.
+Version 0.4. October 31, 2026.
+
+Revision 0.4 approves local Ollama/Nimble for gameplay decisions as the explicit exception to OpenAI-backed development agents.
 
 AUE TOH is a local Unreal Engine development agent for one developer. A supervisor turns conversational requests or supplied specifications into coordinated work by specialist agents, applies changes through Unreal tooling, runs verification, repairs failures, and produces local Git commits with evidence. Its functional benchmark is Aura's Unreal development experience: project-aware conversation, planning, editor execution, specialist delegation, verification, and recovery.
 
-The first release targets UE 5.8.3 on macOS and uses OpenAI for every AI workload. It supports C++, Blueprints, NPC behavior, widgets, levels, materials, visual and audio asset creation, MetaSounds, Niagara editing, performance investigation, and external IDE access, with Aura-style Ask, Plan, and Agent modes. The guarded-door encounter is the integration benchmark. Building a complete multi-hour game remains a long-term capability goal.
+The first release targets UE 5.8.3 on macOS and uses OpenAI for development agents, vision, and AI content generation, with local Ollama/Nimble for gameplay decisions. It supports C++, Blueprints, NPC behavior, widgets, levels, materials, visual and audio asset creation, MetaSounds, Niagara editing, performance investigation, and external IDE access, with Aura-style Ask, Plan, and Agent modes. The guarded-door encounter is the integration benchmark. Building a complete multi-hour game remains a long-term capability goal.
 
 **Status:** Requirements and architecture draft. The confirmed decisions below reflect the product requirements. Sections labelled proposed define implementation defaults for review. Experimental engine features and generated asset quality have explicit release gates.
 
@@ -18,7 +20,7 @@ The first release targets UE 5.8.3 on macOS and uses OpenAI for every AI workloa
 | Framework | LangChain model and tool integration with LangGraph orchestration and persistent workflow state. |
 | Engine | UE 5.8.3 is the first supported engine version. |
 | Platform | macOS is the first required tested platform. Keep the Python core portable; other platforms need their own integration validation. |
-| AI provider | OpenAI for supervisor reasoning, specialists, gameplay decisions, visual evaluation, and AI image/audio generation. Replace Jev rather than retain it as an active dependency. |
+| AI provider | OpenAI for supervisor reasoning, specialists, visual evaluation, and AI image/audio generation. Local Ollama/Nimble is the selected gameplay decision backend; OpenAI Decisions remains an explicitly selectable alternative. Replace Jev as an active dependency. |
 | Provider boundary | LangChain OpenAI objects live in a dedicated file and are accessed through functions. |
 | Agent team | Built-in specialists, developer-defined specialists, and supervisor-created temporary specialists. |
 | Autonomy | Execute independently against an agreed specification; ask when blocked or when a new dependency needs approval. |
@@ -116,7 +118,7 @@ The implementation base is [o0grip0o/AUE_TOH](https://github.com/o0grip0o/AUE_TO
 
 The existing agent selector chooses an implementation backend; it is not the proposed development supervisor. Its provider integrations, Jev decision calls, visual-model paths, and report gates need adaptation. Preserve usable components behind adapters and keep upstream-derived code distinguishable from the new development-agent package.
 
-The supported distribution must not silently call Aura, TypeSafe, Anthropic, or another AI service. Retire their active runtime paths and mandatory dependencies from this application's supported execution path. An existing upstream feature is not evidence that the new OpenAI-only path already works.
+The supported distribution must not silently call Aura, TypeSafe, Anthropic, or another AI service. Retire their active runtime paths and mandatory dependencies from this application's supported execution path. An existing upstream feature is not evidence that the new provider-restricted path already works. Local Ollama gameplay decisions are the only approved non-OpenAI model path.
 
 # Proposed system architecture
 
@@ -231,7 +233,7 @@ Credentials come from a local secret store or environment configuration. Never s
 
 Tests replace the factory with injected fakes. Enforce the construction boundary with a repository check and runtime/provider tests.
 
-Prepare a neutral internal interface for future providers while shipping only an OpenAI implementation initially. This boundary does not imply that vision, image generation, reasoning, and fast gameplay decisions use one model or one endpoint.
+Keep OpenAI construction centralized and provide a separate local Ollama gameplay client getter. Provider selection is explicit, with no automatic cross-provider fallback. Other AI workloads remain OpenAI-backed. This boundary does not imply that vision, image generation, reasoning, and fast gameplay decisions use one model or one endpoint.
 
 # Editor sandboxing and source changes
 
@@ -278,9 +280,11 @@ Resolve targets by stable object/asset paths and verified properties, using labe
 
 Maintain an operation capability matrix for UE 5.8.3: available native tool, required extension, tested status, and known limits. A Blueprint-looking asset or successful tool response is insufficient; read back and compile the resulting asset.
 
-# OpenAI gameplay control and Autopilot adaptation
+# Gameplay control and Autopilot adaptation
 
-Replace Jev's decision-making with an explicit decision-policy interface backed by OpenAI. The initial endpoint selection is OpenAI Decisions (`POST /v1/decisions`) with `gpt-6-luna`, the currently supported model as verified on October 31, 2026. This remains subject to gameplay accuracy and latency measurements. See the [official Decisions guide](https://developers.openai.com/api/docs/guides/decisions). Audit prompt classification, reporting, frame evaluation, memory processing, and all alternate agent paths as well as the obvious runtime calls.
+Replace Jev's decision-making with an explicit decision-policy interface. The selected default is local Ollama/Nimble through `POST /v1/systemone`. OpenAI Decisions (`POST /v1/decisions`, `gpt-6-luna`) remains an explicitly selectable alternative, never an automatic fallback. Both require gameplay accuracy and latency measurements. See the [Ollama Nimble documentation](https://ollama.com/library/nimble) and [OpenAI Decisions guide](https://developers.openai.com/api/docs/guides/decisions).
+
+The `nimble` tag does not establish that the installed weights are Bespoke-Nimble-9B-v2. Verify checkpoint provenance, license, exact installed model digest, quantization, and serving version before calling it v2 or declaring a tested release configuration. The adapter must not install Ollama or download models automatically. Use loopback transport without inherited proxies, credentials, redirects, or implicit remote endpoints. The documented Ollama interface supports 2–26 choices, a 64 KiB request body, and an 8,192-token effective prompt limit; the server enforces tokenization limits. Keep structured game observations compact and benchmark alongside Unreal on the reference Mac. Treat backend confidence as a provider-specific signal, not a calibrated chance of correctness. Audit prompt classification, reporting, frame evaluation, memory processing, and all alternate agent paths as well as the obvious runtime calls.
 
 The model chooses among structured, currently legal gameplay actions. Code performs movement, aiming, button timing, observation sampling, and other fast control locally. Do not place a network model call on every Unreal frame.
 
@@ -290,7 +294,7 @@ Local controllers continue a valid bounded action or select a safe idle behavior
 
 Measure the policy on the benchmark and on a time-sensitive combat fixture. The prototype gate determines which interactions it can control reliably; no response-rate or real-time-combat guarantee is assumed.
 
-The existing harness contract and observation/controller utilities may remain. Refactor session/report rules that require a minimum number of Jev decisions so deterministic assertions and OpenAI-driven episodes can be evaluated on their own evidence. Preserve the distinctions between test failure, control-policy failure, an unplayable environment, and inconclusive evidence.
+The existing harness contract and observation/controller utilities may remain. Refactor session/report rules that require a minimum number of Jev decisions so deterministic assertions and model-driven episodes can be evaluated on their own evidence. Preserve the distinctions between test failure, control-policy failure, an unplayable environment, and inconclusive evidence.
 
 Autopilot's MCP frontend keeps run state and exposes long-call continuation. Keep its session alive during an episode and honor the wait protocol. A still-running response must not cause the job to start the same episode again.
 
@@ -315,7 +319,7 @@ Generation must cover the requested asset classes:
 | Sound effects ambience and music | OpenAI-supported generation where validated, or OpenAI-authored deterministic local synthesis using approved tools. | Decodable non-silent output, requested duration/loop behavior, no unacceptable clipping, and successful UE import/playback. |
 | Synthetic voice | A tested OpenAI speech-generation interface with configured voice/output settings. | Correct spoken content, usable format/duration, and runtime playback. |
 
-An OpenAI-only AI policy does not require every transformation to be performed by an AI service. Deterministic local geometry, rigging, image, and animation tools are permitted after dependency approval.
+The OpenAI policy for content generation does not require every transformation to be performed by an AI service. Deterministic local geometry, rigging, image, and animation tools are permitted after dependency approval.
 
 Rigged-character and animation creation are required workflows, but output quality is a release gate. Start with a documented functional style/complexity target. A failed generation attempt must remain a failed or blocked criterion rather than silently becoming an unrigged/static substitute.
 
@@ -369,7 +373,7 @@ Support switching between persisted local conversations and viewing prior job re
 
 Expose the local tool service through a project-bound MCP frontend so the developer can use it from an IDE or compatible coding client. VS Code and a Codex client are the proposed first tested integrations; generic MCP compatibility is an interface goal, not a promise that every client version is validated. Aura's external-client tooling is the functional reference. [Aura IDE and MCP workflow](https://www.tryaura.dev/documentation/aura-ide-mcp/)
 
-The docked panel and external clients connect to one persistent local supervisor, scheduler, editor gateway, and artifact store. An external request must not bypass sandboxing, tool permissions, dependency approvals, job ownership, source-control limits, or the requirement for OpenAI-backed internal agents.
+The docked panel and external clients connect to one persistent local supervisor, scheduler, editor gateway, and artifact store. An external request must not bypass sandboxing, tool permissions, dependency approvals, job ownership, source-control limits, or the requirement for OpenAI-backed internal agents with the approved local gameplay-policy exception.
 
 Provide a read-only inspection/planning surface and a mutating job-execution surface. Inspection covers project discovery, source/asset lookup, context, diagnostics, plans, status, and evidence. Mutation occurs through the managed jobs and scoped operations already defined in this specification.
 
@@ -480,7 +484,7 @@ The following tests are release requirements. Fixture-specific values and quanti
 | --- | --- |
 | Delegation | A task graph with independent and dependent tasks completes in correct dependency order; ownership conflicts do not produce concurrent writes. |
 | Agent registry | Built-in, developer-defined, and temporary specialists run with the assigned context, schema, and tool subset; spawning limits are enforced. |
-| Provider boundary | All supported AI calls use OpenAI; role getters are injectable; no other module constructs LangChain OpenAI models. |
+| Provider boundary | Development, vision, and content-generation AI calls use OpenAI; only gameplay decisions may use local Ollama. Provider selection is explicit, never a silent fallback; role getters are injectable and LangChain OpenAI construction stays centralized. |
 | Editor identity | With two editors/projects available, operations target the selected instance and reject mismatched project/engine identity. |
 | Sandbox | Asset saves are staged, native source edits are tracked separately, and manual changes are detected without being included in the agent commit. |
 | Candidate packaging | A staged asset change is present in the packaged candidate and matches the final committed content manifest. |
@@ -552,16 +556,16 @@ The supported macOS version range, processor architectures, minimum RAM/storage,
 
 | Milestone | Deliverable and exit criterion |
 | --- | --- |
-| 0 Feasibility | Demonstrate UE 5.8.3/macOS tool discovery, native sandbox staging and persistence, C++ build/restart, exact-candidate packaging, OpenAI gameplay decisions, a basic generated rig/animation pipeline, OpenAI-only audio generation/synthesis, MetaSound playback, and external-client connectivity. Record concrete gaps and measurements. |
+| 0 Feasibility | Demonstrate UE 5.8.3/macOS tool discovery, native sandbox staging and persistence, C++ build/restart, exact-candidate packaging, local Ollama/Nimble gameplay decisions and explicit OpenAI selection, a basic generated rig/animation pipeline, OpenAI-only audio generation/synthesis, MetaSound playback, and external-client connectivity. Record concrete gaps and measurements. |
 | 1 Harness foundation | Centralized models, typed contracts, persistent supervisor, scheduler, agent registry, local service, and docked Ask/Plan/Agent modes, context selection, indexing/search, history, and progress/controls. External MCP access uses the same service state. Core lifecycle tests pass. |
 | 2 Development workflows | C++ plus Blueprint/UI integration, Behavior Tree/Blackboard, Perception/navigation, StateTree, EQS, level/material tooling, Niagara, and MetaSound/gameplay-audio workflows. Targeted live-engine fixtures pass. |
 | 3 Asset workflows | Library discovery, free-source imports, image/procedural generation, character rigging/animation, audio generation/import, provenance, and dependency approvals. Every required asset class has a passing fixture. |
-| 4 Verification and recovery | Adapted OpenAI-only Autopilot runtime, independent review, packaged checks, performance investigation, exact candidate receipts, fault recovery, and local commit delivery. |
+| 4 Verification and recovery | Adapted Autopilot runtime with OpenAI development agents and local Ollama gameplay decisions, independent review, packaged checks, performance investigation, exact candidate receipts, fault recovery, and local commit delivery. |
 | 5 Release validation | Source and packaged installation, guarded-door repeatability, declared platform matrix, measured usage/performance, VS Code/Codex integration, audio fixtures, and Aura functional-baseline scenarios pass the release gates. |
 
 No milestone automatically removes a confirmed feature from the release scope. If a feasibility gate fails, record the blocker and the concrete redesign or scope decision needed before continuing affected work.
 
-Native sandbox coverage, packaging staged assets, generated rig quality, OpenAI-only audio generation quality, and OpenAI gameplay latency are the highest-risk gates. Treat tool ownership rules as application coordination; they do not create an operating-system security sandbox for arbitrary native or Python code.
+Native sandbox coverage, packaging staged assets, generated rig quality, OpenAI-only audio generation quality, and gameplay-policy latency/memory contention are the highest-risk gates. Treat tool ownership rules as application coordination; they do not create an operating-system security sandbox for arbitrary native or Python code.
 
 Numeric task budgets, monetary limits, and reference performance targets are chosen from prototype measurements. The tool must still enforce bounded requests, action timeouts, worker limits, and repair attempts during the prototype.
 
@@ -570,10 +574,10 @@ Numeric task budgets, monetary limits, and reference performance targets are cho
 | Decision | Current position | Needed before release |
 | --- | --- | --- |
 | Mac support matrix | macOS required; exact processor/version minimums unspecified. | Declare and validate the tested machine/OS/architecture combinations. |
-| OpenAI models | One central role-based factory; model IDs not selected. | Pin tested reasoning, vision, image-generation, and gameplay-policy configurations. |
+| Model configurations | Central OpenAI factory; local Ollama/Nimble gameplay default; explicit OpenAI Decisions alternative. | Pin tested reasoning, vision, image-generation, gameplay checkpoint/digest, and serving configurations. |
 | Audio generation quality | Sound effects, ambience, music, voice, and MetaSounds required under the OpenAI-only AI policy. | Prove suitable generation or approved local synthesis paths, quality, API/model compatibility, and packaged playback. |
 | IDE compatibility | External MCP access required; proposed first tested clients are VS Code and Codex. | Pin client versions/transports, setup flows, approval delivery, and reconnect behavior. |
-| Gameplay responsiveness | Network decisions choose actions; local code executes fast control. | Measure latency, stale decisions, and success on interaction and combat fixtures. |
+| Gameplay responsiveness | Local Ollama decisions select actions; explicit OpenAI alternative; local code executes fast control. | Measure latency, stale decisions, and success on interaction and combat fixtures. |
 | Art quality | Requested asset classes confirmed; final visual style unspecified. | Define functional generation fixtures and job-specific visual acceptance criteria. |
 | Dependency set | New dependencies require approval. | Validate and present the base installation manifest and any local content-tool additions. |
 | Sandbox adapter | Native asset staging in the active editor is the chosen reference. | Prove UE 5.8.3/macOS APIs, persistence behavior, and exact candidate export. |

@@ -7,7 +7,8 @@ Aura-like feature set are not implemented yet.
 ## Available now
 
 - Centralized OpenAI model/client getter functions in `ue_agent/llm/openai_models.py`.
-- A bounded-choice OpenAI Decisions policy (`gpt-6-luna`) with legal-action validation, deadlines, and no network retries.
+- A bounded-choice gameplay policy defaulting to local Ollama/Nimble, with explicit OpenAI Decisions selection,
+  legal-action checks, deadlines, and no cloud fallback or decision retries.
 - Typed specifications, task DAG validation, scopes, worker results, and verification contracts.
 - Built-in specialist definitions, custom registration, and temporary roles with inherited tool restrictions.
 - A real LangGraph execution loop over an asynchronous scheduler with bounded concurrency, resource ownership,
@@ -38,9 +39,9 @@ is currently application code; persisting user-defined role definitions is also 
 
 For a real model-generated **plan only**, set `OPENAI_API_KEY` and `UE_AGENT_MODEL` in the environment. Select an
 OpenAI chat model enabled for your account; planning has no default model and tests make no paid calls. The separate
-gameplay policy uses `gpt-6-luna` through `/v1/decisions`, not a LangChain chat call. Its getter returns a dedicated
-OpenAI client from the same central file. The caller supplies legal actions and a monotonic deadline and must
-recheck observation freshness before applying any returned action. Live Autopilot integration remains pending.
+gameplay policy defaults to local Ollama/Nimble through `/v1/systemone`, without an OpenAI key. Selecting
+`UE_AGENT_GAMEPLAY_PROVIDER=openai` uses `gpt-6-luna` through `/v1/decisions` via the central OpenAI getter.
+The caller supplies legal actions and a monotonic deadline and must recheck observation freshness before applying any returned action. Live Autopilot integration remains pending.
 
 ```bash
 python -m ue_agent plan --project /path/to/Game.uproject \
@@ -65,6 +66,26 @@ This is Autopilot's Python execution sandbox, separate from Unreal's asset files
 defaults and CI sandbox settings are unchanged. The full regression run recorded 500 passes, five skips, and one
 legacy process-listing failure (`test_the_listing_has_this_process_and_what_started_it`); that environment-sensitive
 assertion is not changed by this branch. Live macOS/UE integration still needs its own validation.
+
+## Gameplay backend configuration
+
+`choose_action()` reads `GameplaySettings` independently from chat-model configuration:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `UE_AGENT_GAMEPLAY_PROVIDER` | `ollama` | `ollama` for local decisions or explicit `openai`. |
+| `UE_AGENT_GAMEPLAY_MODEL` | `nimble` locally, `gpt-6-luna` for OpenAI | Exact configured decision model/tag. |
+| `UE_AGENT_OLLAMA_URL` | `http://127.0.0.1:11434` | Loopback HTTP service; proxies and redirects are disabled. |
+
+Ollama and model weights must already be installed and approved. This adapter never installs packages, pulls
+weights, or starts a service. HTTP transport uses the existing `httpx` dependency; no Ollama SDK is required.
+The generic `nimble` tag is not verified as the v2 checkpoint. Record provenance and pin the actual model digest
+and serving version before release. The implementation enforces 2–26 local choices and a 64 KiB request body;
+Ollama enforces its effective 8,192-token prompt limit. Invalid responses, missing models, and timeouts yield no
+action and never trigger a cloud fallback. Backend confidence values are not assumed comparable or calibrated.
+
+Tests use a fake HTTP transport and fake OpenAI endpoint. No local service, model weights, or Mac gameplay
+performance have been tested. Live Autopilot session/report migration remains outstanding.
 
 ## Execution and trust boundaries
 
@@ -92,7 +113,7 @@ paths for the final supported distribution remains a separate migration.
 2. Implement a mutation gateway, operation receipts, native asset sandbox integration, and source patch application.
 3. Add the docked panel/local service and external MCP clients using the same persisted jobs and editor queue.
 4. Build trusted candidate materialization, compile, asset, PIE, and packaged-game test adapters.
-5. Adapt Autopilot's controls/observations to the OpenAI decision policy and remove Jev-specific report gates.
+5. Adapt Autopilot's controls/observations to the selected gameplay decision policy and remove Jev-specific report gates.
 6. Add behavior/Blueprint/level workflows, generation/rigging, Niagara, audio/MetaSounds, and profiling fixtures.
 
 These slices implement the specification incrementally; they do not remove required features from release scope.

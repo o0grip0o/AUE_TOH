@@ -1,1 +1,1 @@
-"""Provider objects are created only through openai_models' getter functions."""
+"""Central OpenAI getters and a separate local Ollama gameplay transport getter."""

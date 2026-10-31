@@ -2,6 +2,42 @@
 
 import os
 from dataclasses import dataclass, field
+from urllib.parse import urlsplit
+
+
+@dataclass(frozen=True)
+class GameplaySettings:
+    """Local gameplay decisions are the only exception to the OpenAI provider policy."""
+
+    provider: str = "ollama"
+    model: str | None = None
+    ollama_url: str = "http://127.0.0.1:11434"
+
+    def __post_init__(self):
+        if self.provider not in {"ollama", "openai"}:
+            raise ValueError("Gameplay provider must be ollama or openai")
+        if self.model is not None and not self.model.strip():
+            raise ValueError("Gameplay model ID must not be empty")
+        if self.provider == "openai" and self.model_id != "gpt-6-luna":
+            raise ValueError("OpenAI Decisions currently requires gpt-6-luna")
+        url = urlsplit(self.ollama_url)
+        if (url.scheme != "http" or url.hostname not in {"localhost", "127.0.0.1", "::1"}
+                or url.username is not None or url.password is not None
+                or url.path not in {"", "/"} or url.query or url.fragment):
+            raise ValueError("Ollama must use a loopback HTTP URL without credentials or a path")
+        _ = url.port  # Validate port syntax before any request.
+
+    @property
+    def model_id(self):
+        return self.model or ("nimble" if self.provider == "ollama" else "gpt-6-luna")
+
+    @classmethod
+    def from_env(cls):
+        return cls(
+            provider=os.environ.get("UE_AGENT_GAMEPLAY_PROVIDER", "ollama").strip(),
+            model=os.environ.get("UE_AGENT_GAMEPLAY_MODEL", "").strip() or None,
+            ollama_url=os.environ.get("UE_AGENT_OLLAMA_URL", "http://127.0.0.1:11434").strip(),
+        )
 
 
 @dataclass(frozen=True)
