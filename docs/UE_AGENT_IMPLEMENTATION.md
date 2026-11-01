@@ -107,6 +107,23 @@ The new `ue_agent` path does not import the legacy `autopilot` runtime or invoke
 integrations. The legacy commands and installation dependencies remain available. Removing/replacing those
 paths for the final supported distribution remains a separate migration.
 
+## Next experiment: native Codex + UE MCP
+
+Before implementing more of the standalone coding harness, run the
+[guarded-door baseline](GUARDED_DOOR_BENCHMARK.md) in Codex on the Mac hosting Unreal. Keep the
+[result template](../bench/guarded_door/result.template.md) with actual build, asset, PIE, and packaged-game evidence.
+The baseline excludes the AUE runtime, Aura, and the legacy Autopilot/Nimble integration so it measures what native
+Codex + UE MCP can already accomplish. No additional agent framework is needed for this experiment.
+
+Use Codex's existing specialist delegation for independent analysis and code work, and serialize operations on the
+shared editor. Measure human intervention, failure/recovery, elapsed time, and available usage. Add scoped editor
+tools, evidence collection, or gameplay-control adapters only for persistent demonstrated gaps. The existing journal
+and candidate-verification contracts can be reused where those measurements justify a custom service.
+
+This experiment does not delete long-term product requirements or establish feature parity. The current offline
+foundation tests establish Python behavior, not successful execution inside UE. This cloud session has not verified
+a live Unreal connection; local Codex must first demonstrate a read-only query against the intended editor/project.
+
 ## Next implementation slices
 
 1. Connect a project-bound UE MCP inspection adapter and capability preflight on UE 5.8.3/macOS.

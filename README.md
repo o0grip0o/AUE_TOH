@@ -11,6 +11,10 @@ Native UE 5.8.3/macOS builds and live gameplay remain to be validated.
 
 See the [project specification](docs/UE_AGENT_SPEC.md) and [implementation status](docs/UE_AGENT_IMPLEMENTATION.md).
 
+**Next experiment:** run the [guarded-door benchmark](docs/GUARDED_DOOR_BENCHMARK.md) in local Codex with
+Unreal's native MCP server, using the [result template](bench/guarded_door/result.template.md). This baseline
+measures existing tooling before adding more custom agent infrastructure. It does not require the Python harness.
+
 - [Prerequisites](#prerequisites)
 - [Run the Python foundation](#run-the-python-foundation)
 - [Run the existing plugin in Unreal on macOS](#run-the-existing-plugin-in-unreal-on-macos)

@@ -1,6 +1,8 @@
 # AUE TOH Unreal Autonomous Agent Specification Draft
 
-Version 0.4. October 31, 2026.
+Version 0.5. November 1, 2026.
+
+Revision 0.5 adds a native Codex + UE MCP baseline experiment before further standalone harness work. Long-term product requirements remain unchanged.
 
 Revision 0.4 approves local Ollama/Nimble for gameplay decisions as the explicit exception to OpenAI-backed development agents.
 
@@ -553,6 +555,12 @@ Keep service/plugin protocol versions explicit. On upgrade, migrate supported lo
 The supported macOS version range, processor architectures, minimum RAM/storage, and reference test machine remain release-matrix decisions. They must be declared and tested before publishing a compatibility claim. Other operating systems remain architectural portability targets until their native integration tests pass.
 
 # Implementation milestones and feasibility gates
+
+Before extending the standalone coding harness, run the [guarded-door benchmark](GUARDED_DOOR_BENCHMARK.md)
+using local Codex and Unreal's native MCP tools. Compare actual completion, evidence, human intervention,
+and recovery across independently reset attempts. Use the [result template](../bench/guarded_door/result.template.md)
+and add custom UE execution/verification components only for demonstrated gaps. The existing LangGraph foundation
+remains experimental; this baseline does not depend on it and does not establish full product parity.
 
 | Milestone | Deliverable and exit criterion |
 | --- | --- |
